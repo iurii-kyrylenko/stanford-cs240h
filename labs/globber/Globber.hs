@@ -5,10 +5,12 @@ data GlobTerm = Literal Char    -- a
               | AnyChar         -- ?
               | Substring       -- *
               | FromSet [Char]  -- [abc]
-              deriving (Eq)
+              deriving (Eq, Show)
 
 matchGlob :: GlobPattern -> String -> Bool
-matchGlob g  s  = matchParsed (parseGlob g) s
+matchGlob g s = matchParsed (parseGlob g []) s
+
+-- match parsed --
 
 matchParsed :: [GlobTerm] -> String -> Bool
 matchParsed [] "" = True
@@ -27,12 +29,26 @@ getSubstrings s@(_:xs) =  s : getSubstrings xs
 anySubstring :: (String -> Bool) -> String -> Bool
 anySubstring f = (any f) . getSubstrings
 
-parseGlob :: GlobPattern -> [GlobTerm]
-parseGlob "" = []
--- TO DO --
-parseGlob _ = undefined
+-- parse glob
 
-------
+parseGlob :: GlobPattern -> [GlobTerm] -> [GlobTerm]
+parseGlob "" s = s
+parseGlob ('*':xs) s = parseSubstring xs s           -- Substring
+parseGlob ('?':xs) s = parseGlob xs (s ++ [AnyChar]) -- AnyChar
+parseGlob ('\\':xs) s = parseEscaped xs s            -- Escaped literal
+-- TO DO: sets and ranges
+parseGlob (x:xs) s = parseGlob xs (s ++ [Literal x]) -- Literal
+
+parseSubstring :: GlobPattern -> [GlobTerm] -> [GlobTerm]
+parseSubstring ('*':xs) s = parseSubstring xs s
+parseSubstring xs s = parseGlob xs (s ++ [Substring])
+
+parseEscaped :: GlobPattern -> [GlobTerm] -> [GlobTerm]
+parseEscaped [] s = s ++ [Literal '\\']
+parseEscaped (x:xs) s = parseGlob xs (s ++ [Literal x])
+
+-- tests --
+
 t1 = [ FromSet "0123456789"
      , Literal 'q'
      , Literal 'w'
@@ -63,3 +79,5 @@ t2 = [ Substring
 r2   = matchParsed t2 "7sada5awwwaqwertyy789" -- True
 r2'  = matchParsed t2 "7ada5awwwaqwertyy789"  -- True
 r2'' = matchParsed t2 "7sada5awwwaqwertYy789" -- False
+
+r3 = matchGlob "qwe?rty*\\**STOP*" "qwe_rty______*___STOP___"
