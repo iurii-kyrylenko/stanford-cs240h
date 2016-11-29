@@ -12,3 +12,11 @@ main = hspec $ describe "Testing Globber" $ do
       matchGlob "" "" `shouldBe` True
     it "shouldn't match non-empty string" $
       matchGlob "" "string" `shouldBe` False
+
+  describe "combine patters" $ do
+      it "matches string with multiple patterns" $
+        matchGlob
+          "q****we?rty*\\**STOP*[abcA-F]*\\?"
+          "qwe_rty______*___STOP___D___?"
+          `shouldBe` True
+ 
