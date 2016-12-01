@@ -32,10 +32,14 @@ t5 = t3 + t4
 t6 = do
   putStrLn "type 1 for exception..."
   x <- getLine
-  putStrLn "type 2 for exception..."
   y <- if x == "1"
-    then throwIO $ MyError $ x ++ ": exception from IO"
-    else getLine
+    then
+      throwIO $ MyError $ x ++ ": exception from IO"
+    else do
+      putStrLn "type 2 for exception..."
+      getLine
   if y == "2"
     then throwIO $ MyError $ y ++ ": exception from IO"
     else return $ x ++ y
+
+t7 = catcher t6
